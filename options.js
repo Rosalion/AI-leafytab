@@ -26,7 +26,8 @@ const PROVIDERS = ["openai", "gemini", "deepseek", "zhipu", "openrouter"];
 const state = {
   sync: null,
   local: null,
-  models: { openai: [], gemini: [], deepseek: [], zhipu: [], openrouter: [] }
+  models: { openai: [], gemini: [], deepseek: [], zhipu: [], openrouter: [] },
+  lastSyncUpdateAt: ""
 };
 
 let localeMessages = null;
@@ -43,6 +44,7 @@ async function init() {
   applyPromptLimit();
   render();
   bindEvents();
+  bindStorageListeners();
   initTabs();
   document.addEventListener("click", closeAllColorMenus);
 }
@@ -188,7 +190,8 @@ async function loadSettings() {
     modelCacheGemini: [],
     modelCacheDeepSeek: [],
     modelCacheZhipu: [],
-    modelCacheOpenRouter: []
+    modelCacheOpenRouter: [],
+    lastSyncUpdateAt: ""
   });
 
   if (local.apiKey && !local.apiKeyOpenAI && !local.apiKeyGemini) {
@@ -233,6 +236,7 @@ async function loadSettings() {
     zhipu: Array.isArray(local.modelCacheZhipu) ? local.modelCacheZhipu : [],
     openrouter: Array.isArray(local.modelCacheOpenRouter) ? local.modelCacheOpenRouter : []
   };
+  state.lastSyncUpdateAt = typeof local.lastSyncUpdateAt === "string" ? local.lastSyncUpdateAt : "";
 }
 
 function getDefaultSyncSettings() {
@@ -317,6 +321,7 @@ function render() {
   document.getElementById("proxy-port").value = state.local.proxyPort || "";
   document.getElementById("proxy-scheme").value = state.local.proxyScheme || "http";
   document.getElementById("language-select").value = state.local.uiLanguage || "auto";
+  renderSyncInfo();
 
   const currentKey = getCurrentApiKey();
   if (currentKey) {
@@ -332,6 +337,26 @@ function render() {
   renderRuleOptions();
   renderRules();
   renderModelSelect();
+}
+
+function renderSyncInfo() {
+  const node = document.getElementById("sync-last-update");
+  if (!node) return;
+  node.textContent = formatSyncTime(state.lastSyncUpdateAt);
+}
+
+function formatSyncTime(value) {
+  if (!value) return t("syncNever") || "Never";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return t("syncNever") || "Never";
+  return new Intl.DateTimeFormat(undefined, {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit"
+  }).format(date);
 }
 
 function renderColorOptions() {
@@ -680,6 +705,39 @@ function bindEvents() {
     await applyLocalization();
     render();
     setLanguageStatus("success", t("statusLanguageSaved") || "Language updated.");
+  });
+
+  document.getElementById("sync-now").addEventListener("click", async () => {
+    setSyncStatus("", t("statusSyncing") || "Syncing...");
+    state.lastSyncUpdateAt = new Date().toISOString();
+    await chrome.storage.local.set({ lastSyncUpdateAt: state.lastSyncUpdateAt });
+    renderSyncInfo();
+    await chrome.storage.sync.set({ syncPingAt: state.lastSyncUpdateAt });
+    setSyncStatus("success", t("statusSyncedNow") || "Synced.");
+  });
+}
+
+function bindStorageListeners() {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName === "local" && changes.lastSyncUpdateAt) {
+      state.lastSyncUpdateAt = changes.lastSyncUpdateAt.newValue || "";
+      renderSyncInfo();
+      setSyncStatus("success", t("statusSyncUpdated") || "Sync settings updated from another device.");
+      return;
+    }
+
+    if (areaName !== "sync") return;
+    const watchKeys = ["labels", "domainRules", "defaultLabelId", "domainRulesEnabled"];
+    let changed = false;
+    for (const key of watchKeys) {
+      if (!(key in changes)) continue;
+      state.sync[key] = changes[key].newValue;
+      changed = true;
+    }
+    if (changed) {
+      render();
+      setSyncStatus("success", t("statusSyncUpdated") || "Sync settings updated from another device.");
+    }
   });
 }
 
@@ -1433,6 +1491,14 @@ function setLanguageStatus(type, message) {
   el.classList.remove("success", "error");
   if (type) el.classList.add(type);
   el.textContent = message || "";
+}
+
+function setSyncStatus(type, message) {
+  const status = document.getElementById("sync-status");
+  if (!status) return;
+  status.className = "status";
+  if (type) status.classList.add(type);
+  status.textContent = message || "";
 }
 
 function updateLabelName(id, newName) {

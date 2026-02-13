@@ -11,6 +11,15 @@ const COLOR_PALETTE = [
 ];
 
 const CUSTOM_PROMPT_MAX = 1000;
+const SYNC_CORE_KEYS = [
+  "labels",
+  "domainRules",
+  "defaultLabelId",
+  "domainRulesEnabled",
+  "allowNewLabels",
+  "customPrompt"
+];
+
 const EXPORT_KEYS = [
   "labels",
   "domainRules",
@@ -26,7 +35,8 @@ const PROVIDERS = ["openai", "gemini", "deepseek", "zhipu", "openrouter"];
 const state = {
   sync: null,
   local: null,
-  models: { openai: [], gemini: [], deepseek: [], zhipu: [], openrouter: [] }
+  models: { openai: [], gemini: [], deepseek: [], zhipu: [], openrouter: [] },
+  syncHealth: { state: "checking", lastSyncedAt: "", error: "" }
 };
 
 let localeMessages = null;
@@ -43,6 +53,8 @@ async function init() {
   applyPromptLimit();
   render();
   bindEvents();
+  bindSyncWatchers();
+  await refreshSyncHealth();
   initTabs();
   document.addEventListener("click", closeAllColorMenus);
 }
@@ -188,7 +200,8 @@ async function loadSettings() {
     modelCacheGemini: [],
     modelCacheDeepSeek: [],
     modelCacheZhipu: [],
-    modelCacheOpenRouter: []
+    modelCacheOpenRouter: [],
+    lastSyncedAt: ""
   });
 
   if (local.apiKey && !local.apiKeyOpenAI && !local.apiKeyGemini) {
@@ -224,8 +237,10 @@ async function loadSettings() {
     proxyPort: local.proxyPort || "",
     proxyScheme: local.proxyScheme || "http",
     uiLanguage: local.uiLanguage || "auto",
-    activeTab: local.activeTab || "api"
+    activeTab: local.activeTab || "api",
+    lastSyncedAt: local.lastSyncedAt || ""
   };
+  state.syncHealth.lastSyncedAt = state.local.lastSyncedAt || "";
   state.models = {
     openai: Array.isArray(local.modelCacheOpenAI) ? local.modelCacheOpenAI : [],
     gemini: Array.isArray(local.modelCacheGemini) ? local.modelCacheGemini : [],
@@ -332,6 +347,7 @@ function render() {
   renderRuleOptions();
   renderRules();
   renderModelSelect();
+  renderSyncCard();
 }
 
 function renderColorOptions() {
@@ -532,6 +548,109 @@ function closeAllColorMenus() {
   document.querySelectorAll(".color-select.open").forEach((el) => el.classList.remove("open"));
 }
 
+function renderSyncCard() {
+  const stateEl = document.getElementById("sync-state");
+  const lastSyncEl = document.getElementById("last-sync-time");
+  const countsEl = document.getElementById("sync-counts");
+  if (!stateEl || !lastSyncEl || !countsEl) return;
+
+  stateEl.textContent = getSyncStateText(state.syncHealth.state);
+  const ts = state.syncHealth.lastSyncedAt || state.local.lastSyncedAt;
+  lastSyncEl.textContent = ts ? new Date(ts).toLocaleString() : (t("syncLastNever") || "Never");
+
+  const labelCount = Array.isArray(state.sync?.labels) ? state.sync.labels.length : 0;
+  const rulesCount = state.sync?.domainRules && typeof state.sync.domainRules === "object"
+    ? Object.keys(state.sync.domainRules).length
+    : 0;
+  countsEl.textContent =
+    t("syncCountSummary", [String(labelCount), String(rulesCount)]) ||
+    `${labelCount} labels / ${rulesCount} rules`;
+}
+
+function getSyncStateText(syncState) {
+  if (syncState === "connected") return t("syncStateConnected") || "Connected";
+  if (syncState === "limited") return t("syncStateLimited") || "Limited";
+  if (syncState === "disconnected") return t("syncStateDisconnected") || "Disconnected";
+  return t("syncStateChecking") || "Checking...";
+}
+
+async function refreshSyncHealth({ showStatus = false } = {}) {
+  try {
+    const probeValue = Date.now();
+    await chrome.storage.sync.set({ _sync_probe: probeValue });
+    const probe = await chrome.storage.sync.get({ _sync_probe: 0 });
+    await chrome.storage.sync.remove("_sync_probe");
+    state.syncHealth.state = probe._sync_probe === probeValue ? "connected" : "limited";
+    state.syncHealth.error = "";
+    if (showStatus) {
+      setSyncStatus("success", t("statusSyncHealthy") || "Chrome sync is available.");
+    }
+  } catch (err) {
+    const message = String(err?.message || err || "");
+    state.syncHealth.state = /quota|MAX_WRITE|managed|policy/i.test(message)
+      ? "limited"
+      : "disconnected";
+    state.syncHealth.error = message;
+    if (showStatus) {
+      setSyncStatus(
+        "error",
+        (t("statusSyncUnhealthy") || "Sync check failed.") + (message ? ` ${message}` : "")
+      );
+    }
+  }
+  renderSyncCard();
+}
+
+async function syncNow() {
+  try {
+    const now = new Date().toISOString();
+    await chrome.storage.sync.set({ syncMeta: { updatedAt: now } });
+    state.syncHealth.lastSyncedAt = now;
+    state.local.lastSyncedAt = now;
+    await chrome.storage.local.set({ lastSyncedAt: now });
+    await refreshSyncHealth();
+    setSyncStatus("success", t("statusSyncNowOk") || "Sync signal sent.");
+  } catch (err) {
+    setSyncStatus(
+      "error",
+      (t("statusSyncNowFail") || "Failed to sync now.") + " " + (err?.message || "")
+    );
+  }
+}
+
+function openChromeSyncSettings() {
+  chrome.tabs.create({ url: "chrome://settings/syncSetup" });
+}
+
+function bindSyncWatchers() {
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== "sync") return;
+    if (SYNC_CORE_KEYS.some((key) => Object.prototype.hasOwnProperty.call(changes, key))) {
+      const now = new Date().toISOString();
+      state.syncHealth.lastSyncedAt = now;
+      state.local.lastSyncedAt = now;
+      chrome.storage.local.set({ lastSyncedAt: now });
+      loadSettings().then(render).catch(console.error);
+    }
+    if (Object.prototype.hasOwnProperty.call(changes, "syncMeta")) {
+      const ts = changes.syncMeta?.newValue?.updatedAt;
+      if (ts) {
+        state.syncHealth.lastSyncedAt = ts;
+        state.local.lastSyncedAt = ts;
+        chrome.storage.local.set({ lastSyncedAt: ts });
+        renderSyncCard();
+      }
+    }
+  });
+}
+
+function setSyncStatus(type, message) {
+  const status = document.getElementById("sync-status");
+  if (!status) return;
+  status.className = `status ${type}`;
+  status.textContent = message;
+}
+
 function renderModelSelect() {
   const provider = state.local.apiProvider;
   const models = state.models[provider] || [];
@@ -628,6 +747,12 @@ function bindEvents() {
     if (input) input.click();
   });
   document.getElementById("import-file").addEventListener("change", handleImportFile);
+
+  document.getElementById("sync-refresh").addEventListener("click", () =>
+    refreshSyncHealth({ showStatus: true })
+  );
+  document.getElementById("sync-now").addEventListener("click", syncNow);
+  document.getElementById("open-sync-settings").addEventListener("click", openChromeSyncSettings);
 
   document.getElementById("ungroup-tabs").addEventListener("click", ungroupTabs);
   document.getElementById("ungroup-all-tabs").addEventListener("click", ungroupAllTabs);

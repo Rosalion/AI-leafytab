@@ -346,7 +346,7 @@
         <section class="panel" data-panel="account">
           <header>
             <h2 data-i18n="sectionAccount">Account</h2>
-            <p class="sub" data-i18n="sectionAccountSubtitle">Reserved for future plans and billing.</p>
+            <p class="sub" data-i18n="sectionAccountSubtitle">Check Chrome sync health and manage cross-device config sync.</p>
           </header>
 
           <div class="card">
@@ -355,14 +355,24 @@
               <div class="info-value">Rosa04</div>
             </div>
             <div class="info-row">
-              <div class="info-label" data-i18n="labelAccountStatus">Status</div>
-              <div class="info-value" data-i18n="accountStatusGuest">Not connected</div>
+              <div class="info-label" data-i18n="labelSyncState">Sync status</div>
+              <div class="info-value" id="sync-state" data-i18n="syncStateChecking">Checking…</div>
             </div>
             <div class="info-row">
-              <div class="info-label" data-i18n="labelAccountPlan">Plan</div>
-              <div class="info-value" data-i18n="accountPlanFree">Free</div>
+              <div class="info-label" data-i18n="labelLastSync">Last synced</div>
+              <div class="info-value" id="last-sync-time" data-i18n="syncLastNever">Never</div>
             </div>
-            <p class="hint" data-i18n="noteAccount">You can add paid features here later.</p>
+            <div class="info-row">
+              <div class="info-label" data-i18n="labelSyncData">Sync data</div>
+              <div class="info-value" id="sync-counts">0 labels / 0 rules</div>
+            </div>
+            <div class="button-row">
+              <button id="sync-refresh" class="ghost" data-i18n="buttonCheckSync">Check sync</button>
+              <button id="sync-now" data-i18n="buttonSyncNow">Sync now</button>
+              <button id="open-sync-settings" class="ghost" data-i18n="buttonOpenSyncSettings">Open Chrome sync settings</button>
+            </div>
+            <p class="hint" data-i18n="noteAccount">API keys remain local-only and are never synced.</p>
+            <div id="sync-status" class="status"></div>
             <p class="hint" data-i18n="copyrightNotice">© 2026 Rosa04. All rights reserved.</p>
           </div>
         </section>

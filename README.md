@@ -34,6 +34,7 @@ AI LeafyTab automatically classifies new tabs into label-based groups, syncs lab
 5. Prepare a privacy policy that explains API calls, data usage, and that API keys stay local.
 
 ## Notes
+- Detailed sync design: see `SYNC_DESIGN.md`.
 - Labels and domain rules sync across devices using Chrome account sync.
 - API key is stored only in `chrome.storage.local` on this device.
 - If you change label names, existing domain rules will follow automatically.

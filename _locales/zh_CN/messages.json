@@ -138,6 +138,12 @@
 
   "sectionSync": { "message": "同步" },
   "noteSync": { "message": "标签与域名规则可跨设备同步，API Key 仅在本机保存。" },
+  "labelSyncLastUpdate": { "message": "最近同步更新时间" },
+  "syncNever": { "message": "从未" },
+  "buttonSyncNow": { "message": "立即同步" },
+  "statusSyncing": { "message": "正在同步..." },
+  "statusSyncedNow": { "message": "同步完成。" },
+  "statusSyncUpdated": { "message": "已收到来自其他设备的同步更新。" },
 
   "placeholderNewLabel": { "message": "新标签名称" },
   "placeholderApiKeySaved": { "message": "已保存" },

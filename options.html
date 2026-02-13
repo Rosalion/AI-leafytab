@@ -350,6 +350,19 @@
           </header>
 
           <div class="card">
+            <h3 data-i18n="sectionSync">Sync</h3>
+            <p class="sub" data-i18n="noteSync">Labels and domain rules sync across devices. API Key stays on this device.</p>
+            <div class="info-row">
+              <div class="info-label" data-i18n="labelSyncLastUpdate">Last sync update</div>
+              <div class="info-value" id="sync-last-update" data-i18n="syncNever">Never</div>
+            </div>
+            <div class="button-row">
+              <button id="sync-now" class="primary" data-i18n="buttonSyncNow">Sync now</button>
+            </div>
+            <div id="sync-status" class="status"></div>
+          </div>
+
+          <div class="card">
             <div class="info-row">
               <div class="info-label" data-i18n="labelAuthor">Author</div>
               <div class="info-value">Rosa04</div>

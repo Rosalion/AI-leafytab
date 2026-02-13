@@ -11,6 +11,8 @@ const COLOR_PALETTE = [
 ];
 
 const TAB_PROCESS_COOLDOWN_MS = 10000;
+const SYNC_REGROUP_DEBOUNCE_MS = 1500;
+const SYNC_TRIGGER_KEYS = ["labels", "domainRules", "defaultLabelId", "domainRulesEnabled"];
 
 const inFlight = new Map();
 const processed = new Map();
@@ -23,6 +25,27 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.runtime.onStartup.addListener(() => {
   ensureSyncDefaults().catch(console.error);
   ensureProxySettings().catch(console.error);
+});
+
+let regroupTimer = null;
+
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  if (areaName !== "sync") return;
+  const touched = SYNC_TRIGGER_KEYS.some((key) => key in changes);
+  if (!touched) return;
+
+  chrome.storage.local
+    .set({ lastSyncUpdateAt: new Date().toISOString() })
+    .catch(console.error);
+
+  if (regroupTimer) {
+    clearTimeout(regroupTimer);
+  }
+
+  regroupTimer = setTimeout(() => {
+    regroupAllWindows().catch(console.error);
+    regroupTimer = null;
+  }, SYNC_REGROUP_DEBOUNCE_MS);
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -701,5 +724,12 @@ async function regroupWindow(windowId) {
     if (tab.status === "complete") {
       await maybeGroupTab(tab.id, tab, { force: true });
     }
+  }
+}
+
+async function regroupAllWindows() {
+  const windows = await chrome.windows.getAll({ populate: false });
+  for (const win of windows) {
+    await regroupWindow(win.id);
   }
 }

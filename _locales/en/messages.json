@@ -140,6 +140,12 @@
 
   "sectionSync": { "message": "Sync" },
   "noteSync": { "message": "Labels and domain rules sync across devices. API Key stays on this device." },
+  "labelSyncLastUpdate": { "message": "Last sync update" },
+  "syncNever": { "message": "Never" },
+  "buttonSyncNow": { "message": "Sync now" },
+  "statusSyncing": { "message": "Syncing..." },
+  "statusSyncedNow": { "message": "Synced." },
+  "statusSyncUpdated": { "message": "Sync settings updated from another device." },
 
   "placeholderNewLabel": { "message": "New label name" },
   "placeholderApiKeySaved": { "message": "Saved" },

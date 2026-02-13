@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="optionsTitle">AI LeafyTab</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="brand">
+          <div class="logo">
+            <img src="icons/48.png" alt="" />
+          </div>
+          <div>
+            <h1 data-i18n="optionsTitle">AI LeafyTab</h1>
+            <p data-i18n="optionsSubtitle">Smart tab grouping with AI</p>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="nav-item" data-tab="api">
+            <span data-i18n="navApi">API</span>
+          </button>
+          <button class="nav-item" data-tab="domains">
+            <span data-i18n="navRules">Rules</span>
+          </button>
+          <button class="nav-item" data-tab="labels">
+            <span data-i18n="navLabels">Labels</span>
+          </button>
+          <button class="nav-item" data-tab="logs">
+            <span data-i18n="navLogs">Logs</span>
+          </button>
+          <button class="nav-item" data-tab="language">
+            <span data-i18n="navLanguage">Language</span>
+          </button>
+          <button class="nav-item" data-tab="account">
+            <span data-i18n="navAccount">Account</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="pill" data-i18n="pillLocal">Local key</div>
+          <div class="pill" data-i18n="pillSync">Sync labels</div>
+          <div class="meta-line">
+            <span data-i18n="labelVersion">Version</span>
+            <span id="app-version">0.2</span>
+            <span class="meta-sep">·</span>
+            <span data-i18n="copyrightNotice">Copyright © 2026 Rosa04. All rights reserved.</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="content">
+        <section class="panel" data-panel="api">
+          <header>
+            <h2 data-i18n="sectionApi">API Configuration</h2>
+            <p class="sub" data-i18n="sectionAISubtitle">Connect an API key and choose a model.</p>
+          </header>
+
+          <div class="card">
+            <h3 data-i18n="sectionAI">AI Settings</h3>
+            <div class="field">
+              <label for="provider" data-i18n="labelProvider">Provider</label>
+              <select id="provider">
+                <option value="openai">OpenAI</option>
+                <option value="gemini">Gemini</option>
+                <option value="deepseek">DeepSeek</option>
+                <option value="zhipu">Zhipu (智谱)</option>
+                <option value="openrouter">OpenRouter</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="api-key" data-i18n="labelApiKey">API Key</label>
+              <div class="inline">
+                <input id="api-key" type="password" autocomplete="off" />
+                <button id="test-api" class="primary" data-i18n="buttonTest">Test & Load</button>
+              </div>
+              <p class="hint" data-i18n="noteApiKeyLocal">API Key is stored only on this device.</p>
+            </div>
+
+            <div class="field">
+              <label for="model-select" data-i18n="labelModel">Model</label>
+              <div class="inline">
+                <select id="model-select"></select>
+                <button id="refresh-models" data-i18n="buttonRefresh">Refresh</button>
+              </div>
+              <p id="model-hint" class="hint"></p>
+            </div>
+
+            <div id="api-status" class="status"></div>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="sectionProxy">Proxy</h3>
+            <p class="sub" data-i18n="sectionProxySubtitle">Route AI API requests through a proxy.</p>
+
+            <div class="switch-row">
+              <div>
+                <div class="switch-title" data-i18n="labelProxyEnabled">Enable proxy for AI API</div>
+                <div class="switch-desc" data-i18n="descProxyEnabled">Only OpenAI/Gemini API requests use this proxy.</div>
+              </div>
+              <label class="switch">
+                <input id="proxy-enabled" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="field">
+              <label for="proxy-scheme" data-i18n="labelProxyScheme">Proxy type</label>
+              <select id="proxy-scheme">
+                <option value="http">HTTP</option>
+                <option value="socks5">SOCKS5</option>
+                <option value="socks4">SOCKS4</option>
+              </select>
+            </div>
+
+            <div class="grid-2">
+              <div class="field">
+                <label for="proxy-host" data-i18n="labelProxyHost">Proxy host</label>
+                <input id="proxy-host" type="text" placeholder="127.0.0.1" />
+              </div>
+              <div class="field">
+                <label for="proxy-port" data-i18n="labelProxyPort">Proxy port</label>
+                <input id="proxy-port" type="number" inputmode="numeric" placeholder="7890" />
+              </div>
+            </div>
+
+            <div class="button-row">
+              <button id="apply-proxy" class="primary" data-i18n="buttonApplyProxy">Apply proxy</button>
+              <button id="clear-proxy" class="ghost" data-i18n="buttonClearProxy">Disable proxy</button>
+            </div>
+            <p class="hint" data-i18n="noteProxyEffect">This uses Chrome proxy settings. Other sites will go DIRECT while enabled.</p>
+            <div id="proxy-status" class="status"></div>
+          </div>
+        </section>
+
+        <section class="panel scrollable" data-panel="domains">
+          <header>
+            <h2 data-i18n="sectionRulesPage">Rule Settings</h2>
+            <p class="sub" data-i18n="sectionRulesPageSubtitle">Manage domain rules and prompts.</p>
+          </header>
+
+          <div class="card">
+            <h3 data-i18n="sectionBehavior">Behavior</h3>
+            <div class="switch-row">
+              <div>
+                <div class="switch-title" data-i18n="labelAutoGroup">Auto group new tabs</div>
+                <div class="switch-desc" data-i18n="descAutoGroup">Group tabs as soon as they finish loading.</div>
+              </div>
+              <label class="switch">
+                <input id="auto-group" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div class="switch-row">
+              <div>
+                <div class="switch-title" data-i18n="labelAllowNew">Allow AI to create new labels</div>
+                <div class="switch-desc" data-i18n="descAllowNew">If off, AI must choose from your list.</div>
+              </div>
+              <label class="switch">
+                <input id="allow-new" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="sectionRules">Domain Rules</h3>
+            <p class="sub" data-i18n="sectionRulesSubtitle">Remember how specific domains should be grouped.</p>
+
+            <div class="switch-row">
+              <div>
+                <div class="switch-title" data-i18n="labelRulesEnabled">Enable domain rules</div>
+                <div class="switch-desc" data-i18n="descRulesEnabled">Use saved rules and learn new ones.</div>
+              </div>
+              <label class="switch">
+                <input id="rules-enabled" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+
+            <div id="rules-list" class="list"></div>
+            <div class="add-row">
+              <input id="new-rule-domain" type="text" data-i18n-placeholder="placeholderRuleDomain" />
+              <select id="new-rule-label"></select>
+              <button id="add-rule" data-i18n="buttonAddRule">Add rule</button>
+            </div>
+            <div class="button-row">
+              <button id="clear-rules" class="ghost" data-i18n="buttonClearRules">Clear all rules</button>
+            </div>
+            <div id="rules-status" class="status"></div>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="sectionPrompts">Prompt Management</h3>
+            <p class="sub" data-i18n="sectionPromptsSubtitle">Guide the AI with custom instructions.</p>
+            <textarea id="custom-prompt" rows="6" data-i18n-placeholder="placeholderCustomPrompt"></textarea>
+            <p class="hint" data-i18n="noteCustomPrompt">These hints guide AI grouping for every tab.</p>
+            <p class="hint" id="prompt-limit"></p>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="sectionImportExport">Import & Export</h3>
+            <p class="sub" data-i18n="sectionImportExportSubtitle">Move rules and labels between profiles.</p>
+            <div class="import-options">
+              <div class="import-row import-row-single">
+                <label class="import-checkbox">
+                  <input id="import-overwrite-prompt" type="checkbox" />
+                  <span data-i18n="labelImportPromptOverwrite">Overwrite prompt</span>
+                </label>
+              </div>
+              <div class="import-row">
+                <div class="import-row-title" data-i18n="labelImportRulesMode">Rules</div>
+                <div class="import-row-controls">
+                  <label class="radio">
+                    <input type="radio" name="import-rules-mode" value="merge" checked />
+                    <span data-i18n="optionImportMerge">Merge</span>
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="import-rules-mode" value="overwrite" />
+                    <span data-i18n="optionImportOverwrite">Overwrite</span>
+                  </label>
+                </div>
+              </div>
+              <div class="import-row">
+                <div class="import-row-title" data-i18n="labelImportLabelsMode">Labels</div>
+                <div class="import-row-controls">
+                  <label class="radio">
+                    <input type="radio" name="import-labels-mode" value="merge" checked />
+                    <span data-i18n="optionImportMerge">Merge</span>
+                  </label>
+                  <label class="radio">
+                    <input type="radio" name="import-labels-mode" value="overwrite" />
+                    <span data-i18n="optionImportOverwrite">Overwrite</span>
+                  </label>
+                </div>
+              </div>
+              <p class="hint" data-i18n="noteImportMerge">Merge keeps existing items and adds new ones.</p>
+            </div>
+            <div class="button-row">
+              <button id="export-data" class="ghost" data-i18n="buttonExport">Export</button>
+              <button id="import-data" class="primary" data-i18n="buttonImport">Import</button>
+              <input id="import-file" type="file" accept="application/json" hidden />
+            </div>
+            <p class="hint" data-i18n="noteImportExport">API Keys are never exported.</p>
+            <div id="import-export-status" class="status"></div>
+          </div>
+        </section>
+
+        <section class="panel scrollable" data-panel="labels">
+          <header>
+            <h2 data-i18n="sectionLabelsPage">Label Groups</h2>
+            <p class="sub" data-i18n="sectionLabelsPageSubtitle">Rename labels and manage colors.</p>
+          </header>
+
+          <div class="card allow-overflow">
+            <h3 data-i18n="sectionLabels">Labels</h3>
+            <p class="sub" data-i18n="sectionLabelsSubtitle">Maintain the label list used for grouping.</p>
+            <div class="label-toolbar">
+              <div class="hint" data-i18n="noteLabelOrder">Drag to reorder labels.</div>
+              <div class="button-row">
+                <button id="sort-labels-asc" class="ghost" data-i18n="buttonSortAsc">Sort A–Z</button>
+                <button id="sort-labels-desc" class="ghost" data-i18n="buttonSortDesc">Sort Z–A</button>
+              </div>
+            </div>
+            <div id="labels-list" class="list"></div>
+            <div class="add-row">
+              <input id="new-label-name" type="text" data-i18n-placeholder="placeholderNewLabel" />
+              <div id="new-label-color" class="color-select-host"></div>
+              <button id="add-label" data-i18n="buttonAdd">Add</button>
+            </div>
+            <p class="hint" data-i18n="noteLabelsSync">Labels and learned domains sync with your Chrome account.</p>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="sectionGroups">Tab Groups</h3>
+            <p class="sub" data-i18n="sectionGroupsSubtitle">Quickly remove existing tab groups.</p>
+            <div class="button-row">
+              <button id="ungroup-tabs" class="danger" data-i18n="buttonUngroup">Remove groups in current window</button>
+              <button id="ungroup-all-tabs" class="ghost" data-i18n="buttonUngroupAll">Remove groups in all windows</button>
+            </div>
+            <p class="hint" data-i18n="noteGroupsLimit">Saved tab groups in the Chrome toolbar can’t be removed by extensions.</p>
+            <div id="ungroup-status" class="status"></div>
+          </div>
+
+          <div class="card">
+            <h3 data-i18n="sectionDuplicates">Duplicate Tabs</h3>
+            <p class="sub" data-i18n="sectionDuplicatesSubtitle">Close duplicate tabs with one click.</p>
+            <div class="button-row">
+              <button id="dedupe-tabs" class="danger" data-i18n="buttonDedupe">Remove duplicates in current window</button>
+              <button id="dedupe-all-tabs" class="ghost" data-i18n="buttonDedupeAll">Remove duplicates in all windows</button>
+            </div>
+            <div id="dedupe-status" class="status"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="logs">
+          <header>
+            <h2 data-i18n="sectionDebug">Logs</h2>
+            <p class="sub" data-i18n="sectionDebugSubtitle">Store AI inputs and outputs locally for troubleshooting.</p>
+          </header>
+
+          <div class="card">
+            <div class="switch-row">
+              <div>
+                <div class="switch-title" data-i18n="labelLogging">Enable local logs</div>
+                <div class="switch-desc" data-i18n="descLogging">Logs include prompt and AI response, stored on this device.</div>
+              </div>
+              <label class="switch">
+                <input id="logging-enabled" type="checkbox" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="button-row">
+              <button id="download-logs" data-i18n="buttonDownloadLogs">Download logs</button>
+              <button id="clear-logs" class="ghost" data-i18n="buttonClearLogs">Clear logs</button>
+            </div>
+            <div id="debug-status" class="status"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="language">
+          <header>
+            <h2 data-i18n="sectionLanguage">Language</h2>
+            <p class="sub" data-i18n="sectionLanguageSubtitle">Choose the language for this settings page.</p>
+          </header>
+
+          <div class="card">
+            <div class="field">
+              <label for="language-select" data-i18n="labelLanguage">Interface language</label>
+              <select id="language-select">
+                <option value="auto" data-i18n="languageAuto">Follow browser</option>
+                <option value="en">English</option>
+                <option value="zh_CN">中文</option>
+              </select>
+            </div>
+            <p class="hint" data-i18n="noteLanguage">This only affects the settings page.</p>
+            <div id="language-status" class="status"></div>
+          </div>
+        </section>
+
+        <section class="panel" data-panel="account">
+          <header>
+            <h2 data-i18n="sectionAccount">Account</h2>
+            <p class="sub" data-i18n="sectionAccountSubtitle">Reserved for future plans and billing.</p>
+          </header>
+
+          <div class="card">
+            <div class="info-row">
+              <div class="info-label" data-i18n="labelAuthor">Author</div>
+              <div class="info-value">Rosa04</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label" data-i18n="labelAccountStatus">Status</div>
+              <div class="info-value" data-i18n="accountStatusGuest">Not connected</div>
+            </div>
+            <div class="info-row">
+              <div class="info-label" data-i18n="labelAccountPlan">Plan</div>
+              <div class="info-value" data-i18n="accountPlanFree">Free</div>
+            </div>
+            <p class="hint" data-i18n="noteAccount">You can add paid features here later.</p>
+            <p class="hint" data-i18n="copyrightNotice">© 2026 Rosa04. All rights reserved.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="options.js"></script>
+  </body>
+</html>

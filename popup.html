@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="popupTitle">AI LeafyTab</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="panel">
+      <div class="title" data-i18n="popupTitle">AI LeafyTab</div>
+      <div id="status" class="status"></div>
+      <button id="group-now" class="primary" data-i18n="popupGroupNow">Group this window</button>
+      <div class="switch-row">
+        <span data-i18n="popupAutoLabel">Auto grouping</span>
+        <label class="switch">
+          <input id="auto-switch" type="checkbox" />
+          <span class="slider"></span>
+        </label>
+      </div>
+      <button id="dedupe-now" class="secondary" data-i18n="popupDedupeNow">Remove duplicate tabs</button>
+      <button id="open-options" class="secondary" data-i18n="popupOpenOptions">Open settings</button>
+      <div class="meta-line">
+        <span data-i18n="labelVersion">Version</span>
+        <span id="app-version">0.2</span>
+        <span class="meta-sep">·</span>
+        <span data-i18n="copyrightNotice">Copyright © 2026 Rosa04. All rights reserved.</span>
+      </div>
+    </div>
+    <script src="popup.js"></script>
+  </body>
+</html>
